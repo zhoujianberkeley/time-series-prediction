@@ -5,10 +5,13 @@
 
 
 build image via pycharm terminal 
+
 ![img.png](screenshots/img.png)
 
 push image to my registry
+
 ![img.png](screenshots/img2.png)
 
 成功记录
+
 ![img.png](screenshots/img3.png)
