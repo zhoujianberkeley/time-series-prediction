@@ -14,8 +14,7 @@ push image to my registry
 ![img.png](screenshots/img2.png)
 
 成功记录
-
-![img.png](screenshots/img3.png)
+score: -16
 
 
 ### Feb 26th 打卡学习记录
