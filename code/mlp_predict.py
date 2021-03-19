@@ -15,10 +15,10 @@ def RMSE(y_true, y_pred):
 def build_model():  
     inp    = Input(shape=(12,24,72,4))  
     
-    x_4    = Dense(1, activation='relu')(inp)   
-    x_3    = Dense(1, activation='relu')(tf.reshape(x_4,[-1,12,24,72]))
-    x_2    = Dense(1, activation='relu')(tf.reshape(x_3,[-1,12,24]))
-    x_1    = Dense(1, activation='relu')(tf.reshape(x_2,[-1,12]))
+    x_4 = Dense(1, activation='relu')(inp)
+    x_3 = Dense(1, activation='relu')(tf.reshape(x_4,[-1,12,24,72]))
+    x_2 = Dense(1, activation='relu')(tf.reshape(x_3,[-1,12,24]))
+    x_1 = Dense(1, activation='relu')(tf.reshape(x_2,[-1,12]))
      
     x = Dense(64, activation='relu')(x_1)  
     x = Dropout(0.25)(x) 
