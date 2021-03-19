@@ -1,7 +1,8 @@
 # Base Images
 ## 从天池基础镜像构建
 #FROM registry.cn-shanghai.aliyuncs.com/tcc-public/python:3
-FROM registry.cn-shanghai.aliyuncs.com/tcc-public/tensorflow:latest-cuda10.0-py3
+#FROM registry.cn-shanghai.aliyuncs.com/tcc-public/tensorflow:latest-cuda10.0-py3
+FROM registry.cn-shanghai.aliyuncs.com/tcc-public/pytorch:1.6-cuda10.1-py3
 
 ## 把当前文件夹里的文件构建到镜像的根目录下（.后面有空格，不能直接跟/）
 ADD . /
@@ -11,7 +12,7 @@ WORKDIR /
 
 ## Install Requirements（requirements.txt包含python包的版本）
 ## 这里使用清华镜像加速安装
-RUN pip install -i https://pypi.tuna.tsinghua.edu.cn/simple --upgrade pip
+#RUN pip install -i https://pypi.tuna.tsinghua.edu.cn/simple --upgrade pip
 RUN pip install -i https://pypi.tuna.tsinghua.edu.cn/simple -r requirements.txt
 
 ## 镜像启动后统一执行 sh run.sh

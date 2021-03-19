@@ -1,14 +1,11 @@
 import os
-import torch
-from copy import deepcopy
-import numpy as np
-import xarray as xr
-import pandas as pd
-import torch.nn as nn
 import random
-from tqdm import tqdm
-from sklearn.model_selection import train_test_split
+import numpy as np
+import torch
+import torch.nn as nn
 from torch.utils.data import Dataset, DataLoader
+
+
 
 
 # python ref/stnn_train.py
@@ -20,6 +17,7 @@ def set_seed(seed=427):
 
 
 def load_data2():
+    import xarray as xr
     # CMIP data
     train = xr.open_dataset('../data/enso_round1_train_20210201/CMIP_train.nc')
     label = xr.open_dataset('../data/enso_round1_train_20210201/CMIP_label.nc')
