@@ -33,6 +33,18 @@ def predict_single(data_dir, file, model):
     y = model(sst, t300, ua, va)
     return y.detach().numpy().reshape(-1)  # + 0.04
 
+# ### 1. 测试数据读取
+# files = os.listdir(test_path)
+# test_feas_dict = {}
+# for file in files:
+#     if (file not in ['.DS_Store']) and not (os.path.isdir(os.path.join(test_path, file))):
+#         print(file)
+#         test_feas_dict[file] = np.load(test_path + file)
+#
+# ### 2. 结果预测
+# test_predicts_dict = {}
+# for file_name,val in test_feas_dict.items():
+#     test_predicts_dict[file_name] = model.predict(val).reshape(-1,)
 
 def predict(data_dir='../tcdata/enso_round1_test_20210201',
             model_dir='../user_data/fine'):  # 提交时： '../tcdata/enso_round1_test_20210201'
@@ -42,20 +54,25 @@ def predict(data_dir='../tcdata/enso_round1_test_20210201',
 
     from stnn_train import load_model
     model = load_model(model_dir)
-    # model = simpleSpatialTimeNN()
-    # model.load_state_dict(torch.load(model_dir))
-    # model.eval()
-    # model = tf.saved_model.load(model_dir)
 
-    for file in os.listdir(data_dir):
+    ### 1. 测试数据读取
+    files = os.listdir(data_dir)
+    for file in files:
+        if not (file not in ['.DS_Store']) and not (os.path.isdir(os.path.join(data_dir, file))):
+            continue
         if not file.endswith(".npy"):
             continue
+        print(file)
+        ### 2. 结果预测
         res = predict_single(data_dir, file, model)
         np.save('../result/{}'.format(file), res)
     return
 
+# 选手针对测试集中每个测试样本，预测未来24个月的Nino3.4指数，并保存为和测试样本同名的npy格式文件，
+# 其中Nino3.4指数均以float格式保存。例如针对test_00001_01_12_.npy样本，
+# 预测结果保存为test_00001_01_12_.npy。将测试集所有样本预测结果文件保存在result文件夹下，并打包为result.zip。
 
-def compress(res_dir='../result', output_dir='result.zip'):
+def compress(res_dir='../result', output_dir='../result.zip'):
     z = zipfile.ZipFile(output_dir, 'w')
     for d in os.listdir(res_dir):
         z.write(res_dir + os.sep + d)
@@ -75,8 +92,5 @@ if __name__ == '__main__':
     model_dir = '../user_data/stnn.pt'
     predict(model_dir=model_dir)
     compress()
-    local_test(model_dir)
-
-
-
-# test = np.load("../data/enso_round1_test_20210201/test_0144-01-12.npy")
+    print("finish")
+    # local_test(model_dir)
