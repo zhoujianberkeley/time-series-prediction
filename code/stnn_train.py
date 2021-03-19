@@ -6,7 +6,8 @@ import torch.nn as nn
 from torch.utils.data import Dataset, DataLoader
 
 
-
+import os
+os.environ["KMP_DUPLICATE_LIB_OK"]="TRUE"
 
 # python ref/stnn_train.py
 def set_seed(seed=427):
@@ -86,6 +87,15 @@ class simpleSpatialTimeNN(nn.Module):
         self.pool3 = nn.AdaptiveAvgPool2d((1, 128))
         self.batch_norm = nn.BatchNorm1d(12, affine=False)
         self.lstm = nn.LSTM(1540 * 4, n_lstm_units, 2, bidirectional=True, batch_first=True)
+        # todo lstminput of shape (seq_len, batch, input_size) seq_len = lat*lon = 1540
+        # input_size: The number of expected features in the input `x`
+        # hidden_size: The number of features in the hidden state `h`
+        # num_layers: Number of recurrent layers. E.g., setting ``num_layers=2``
+        #     would mean stacking two LSTMs together to form a `stacked LSTM`,
+        #     with the second LSTM taking in outputs of the first LSTM and
+        #     computing the final results. Default: 1
+        # fixme the input shape of lstm seems to be mistaken, should b 12, 64, 6160
+        #         - **input** of shape `(seq_len, batch, input_size)`: tensor containing the features
         self.linear = nn.Linear(128, 24)
 
     def forward(self, sst, t300, ua, va):
@@ -106,6 +116,7 @@ class simpleSpatialTimeNN(nn.Module):
         x = torch.cat([sst, t300, ua, va], dim=-1)
         x = self.batch_norm(x)
         x, _ = self.lstm(x)
+
         x = self.pool3(x).squeeze(dim=-2)
         x = self.linear(x)
         return x
@@ -178,8 +189,6 @@ def train():
             optimizer.zero_grad() # set the gradient back to 0
             label = label.to(device).float()
 
-            preds = model(sst[:1,:,:,:], t300[:1,:,:,:], ua[:1,:,:,:], va[:1,:,:,:])
-
             preds = model(sst, t300, ua, va)
             loss = loss_fn(preds, label)
             loss.backward()
@@ -211,7 +220,6 @@ def train():
         print('Epoch: {}, Valid Score {}'.format(i + 1, sco))
 
     torch.save(model.state_dict(), '../user_data/stnn.pt')
-    # torch.save(model, '../user_data/stnn.pkl')
 
     print('Model saved successfully')
 
