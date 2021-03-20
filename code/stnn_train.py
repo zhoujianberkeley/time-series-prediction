@@ -5,8 +5,6 @@ import torch
 import torch.nn as nn
 from torch.utils.data import Dataset, DataLoader
 
-
-import os
 os.environ["KMP_DUPLICATE_LIB_OK"]="TRUE"
 
 # python ref/stnn_train.py
@@ -15,6 +13,18 @@ def set_seed(seed=427):
     np.random.seed(seed)
     os.environ['PYTHONHASHSEED'] = str(seed)
     torch.manual_seed(seed)
+
+
+class EarthDataSet(Dataset):
+    def __init__(self, data):
+        self.data = data
+
+    def __len__(self):
+        return len(self.data['sst'])
+
+    def __getitem__(self, idx):
+        return (self.data['sst'][idx], self.data['t300'][idx], self.data['ua'][idx], self.data['va'][idx]), \
+               self.data['label'][idx]
 
 
 def load_data2():
@@ -65,18 +75,6 @@ def load_data2():
     return train_dataset, valid_dataset
 
 
-class EarthDataSet(Dataset):
-    def __init__(self, data):
-        self.data = data
-
-    def __len__(self):
-        return len(self.data['sst'])
-
-    def __getitem__(self, idx):
-        return (self.data['sst'][idx], self.data['t300'][idx], self.data['ua'][idx], self.data['va'][idx]), \
-               self.data['label'][idx]
-
-
 class simpleSpatialTimeNN(nn.Module):
     def __init__(self, n_cnn_layer: int = 1, kernals: list = [3], n_lstm_units: int = 64):
         super(simpleSpatialTimeNN, self).__init__()
@@ -123,12 +121,14 @@ class simpleSpatialTimeNN(nn.Module):
         x = self.linear(x)
         return x
 
+
 def load_model(model_dir):
     print(model_dir)
     model = simpleSpatialTimeNN()
     model.load_state_dict(torch.load(model_dir))
     model.eval()
     return model
+
 
 def coreff(x, y):
     x_mean = np.mean(x)
