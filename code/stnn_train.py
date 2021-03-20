@@ -23,11 +23,13 @@ def load_data2():
     train = xr.open_dataset('../data/enso_round1_train_20210201/CMIP_train.nc')
     label = xr.open_dataset('../data/enso_round1_train_20210201/CMIP_label.nc')
 
-    train_sst = train['sst'][:, :12].values  # (4645, 12, 24, 72)
+    # feature 前12个月
+    train_sst = train['sst'][:, :12].values  #(4645-样本量, 12-12个月, 24-经度, 72-纬度)
     train_t300 = train['t300'][:, :12].values
     train_ua = train['ua'][:, :12].values
     train_va = train['va'][:, :12].values
-    train_label = label['nino'][:, 12:36].values
+    # label 后24个月
+    train_label = label['nino'][:, 12:36].values # y
 
     train_ua = np.nan_to_num(train_ua) # Replace NaN with zero and infinity with large finite numbers
     train_va = np.nan_to_num(train_va)
@@ -38,7 +40,7 @@ def load_data2():
     train2 = xr.open_dataset('../data/enso_round1_train_20210201/SODA_train.nc')
     label2 = xr.open_dataset('../data/enso_round1_train_20210201/SODA_label.nc')
 
-    train_sst2 = train2['sst'][:, :12].values  # (4645, 12, 24, 72)
+    train_sst2 = train2['sst'][:, :12].values  # (100, 12, 24, 72)
     train_t3002 = train2['t300'][:, :12].values
     train_ua2 = train2['ua'][:, :12].values
     train_va2 = train2['va'][:, :12].values
@@ -156,10 +158,10 @@ def eval_score(preds, label):
 
 
 fit_params = {
-    # 'n_epochs': 22,
-    'n_epochs': 2,
+    'n_epochs': 22,
+    # 'n_epochs': 2,
     'learning_rate': 8e-5,
-    'batch_size': 64,
+    'batch_size': 128,
 }
 
 
@@ -172,7 +174,7 @@ def train():
     model = simpleSpatialTimeNN()
     device = 'cuda' if torch.cuda.is_available() else 'cpu'
     optimizer = torch.optim.Adam(model.parameters(), lr=fit_params['learning_rate'])
-    loss_fn = nn.MSELoss()
+    loss_fn = nn.MSELoss()  # score
 
     model.to(device)
     loss_fn.to(device)
@@ -219,8 +221,7 @@ def train():
         sco = eval_score(y_true.cpu().detach().numpy(), y_pred.cpu().detach().numpy())
         print('Epoch: {}, Valid Score {}'.format(i + 1, sco))
 
-    torch.save(model.state_dict(), '../user_data/stnn.pt')
-
+    torch.save(model.state_dict(), '../user_data/stnn.pt') # save model
     print('Model saved successfully')
 
 

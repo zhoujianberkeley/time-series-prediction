@@ -4,6 +4,7 @@ import zipfile
 import shutil
 import torch
 
+ # 提交用脚本
 def predict_single(data_dir, file, model):
     test_data = np.load(os.path.join(data_dir, file))
     # start_month = int(file.split('_')[2])
