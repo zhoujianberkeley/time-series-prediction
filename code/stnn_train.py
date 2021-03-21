@@ -1,6 +1,5 @@
 import os
-import torch
-from copy import deepcopy
+import random
 import numpy as np
 import xarray as xr
 import pandas as pd
@@ -55,16 +54,30 @@ def set_seed(seed=427):
     torch.manual_seed(seed)
 
 
+class EarthDataSet(Dataset):
+    def __init__(self, data):
+        self.data = data
+
+    def __len__(self):
+        return len(self.data['sst'])
+
+    def __getitem__(self, idx):
+        return (self.data['sst'][idx], self.data['t300'][idx], self.data['ua'][idx], self.data['va'][idx]), \
+               self.data['label'][idx]
+
+
 def load_data2():
     # CMIP data
     train = xr.open_dataset('D:/chromeFiles/enso_round1_train_20210201/CMIP_train.nc')
     label = xr.open_dataset('D:/chromeFiles/enso_round1_train_20210201/CMIP_label.nc')
 
-    train_sst = train['sst'][:, :12].values  # (4645, 12, 24, 72)
+    # feature 前12个月
+    train_sst = train['sst'][:, :12].values  #(4645-样本量, 12-12个月, 24-经度, 72-纬度)
     train_t300 = train['t300'][:, :12].values
     train_ua = train['ua'][:, :12].values
     train_va = train['va'][:, :12].values
-    train_label = label['nino'][:, 12:36].values
+    # label 后24个月
+    train_label = label['nino'][:, 12:36].values # y
 
     train_ua = np.nan_to_num(train_ua) # Replace NaN with zero and infinity with large finite numbers
     train_va = np.nan_to_num(train_va)
@@ -75,7 +88,7 @@ def load_data2():
     train2 = xr.open_dataset('D:/chromeFiles/enso_round1_train_20210201/SODA_train.nc')
     label2 = xr.open_dataset('D:/chromeFiles/enso_round1_train_20210201/SODA_label.nc')
 
-    train_sst2 = train2['sst'][:, :12].values  # (4645, 12, 24, 72)
+    train_sst2 = train2['sst'][:, :12].values  # (100, 12, 24, 72)
     train_t3002 = train2['t300'][:, :12].values
     train_ua2 = train2['ua'][:, :12].values
     train_va2 = train2['va'][:, :12].values
@@ -124,6 +137,15 @@ class simpleSpatialTimeNN(nn.Module):
         self.pool3 = nn.AdaptiveAvgPool2d((1, 128))
         self.batch_norm = nn.BatchNorm1d(12, affine=False)
         self.lstm = nn.LSTM(1540 * 4, n_lstm_units, 2, bidirectional=True, batch_first=True)
+        # todo lstminput of shape (seq_len, batch, input_size) seq_len = lat*lon = 1540
+        # input_size: The number of expected features in the input `x`
+        # hidden_size: The number of features in the hidden state `h`
+        # num_layers: Number of recurrent layers. E.g., setting ``num_layers=2``
+        #     would mean stacking two LSTMs together to form a `stacked LSTM`,
+        #     with the second LSTM taking in outputs of the first LSTM and
+        #     computing the final results. Default: 1
+        # fixme the input shape of lstm seems to be mistaken, should b 12, 64, 6160
+        #         - **input** of shape `(seq_len, batch, input_size)`: tensor containing the features
         self.linear = nn.Linear(128, 24)
 
     def forward(self, sst, t300, ua, va):
@@ -144,9 +166,11 @@ class simpleSpatialTimeNN(nn.Module):
         x = torch.cat([sst, t300, ua, va], dim=-1)
         x = self.batch_norm(x)
         x, _ = self.lstm(x)
+
         x = self.pool3(x).squeeze(dim=-2)
         x = self.linear(x)
         return x
+
 
 def load_model(model_dir):
     print(model_dir)
@@ -154,6 +178,7 @@ def load_model(model_dir):
     model.load_state_dict(torch.load(model_dir))
     model.eval()
     return model
+
 
 def coreff(x, y):
     x_mean = np.mean(x)
@@ -258,9 +283,7 @@ def train():
             valid_score.append(sco)
         print('Epoch: {}, Valid Score {}'.format(i + 1, sco))
 
-    torch.save(model.state_dict(), '../user_data/stnn.pt')
-    # torch.save(model, '../user_data/stnn.pkl')
-
+    torch.save(model.state_dict(), '../user_data/stnn.pt') # save model
     print('Model saved successfully')
 
 
