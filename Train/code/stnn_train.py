@@ -217,14 +217,14 @@ def eval_score(preds, label):
 
 
 fit_params = {
-    'n_epochs': 3,
+    'n_epochs': 10,
     # 'n_epochs': 2,
     'learning_rate': 4e-3,
     'num_of_soda_in_a_all_soda_train':60,
     'num_of_all_soda_in_train':40,
-    'batch_size': 64,
-    # 'loss':nn.MSELoss(),
-    'loss':ScoreLoss()
+    'batch_size': 128,
+    'loss':nn.MSELoss(),
+    # 'loss':ScoreLoss()
 }
 
 

@@ -8,9 +8,9 @@ class simpleSpatialTimeNN(nn.Module):
         self.conv2 = nn.ModuleList([nn.Conv2d(in_channels=12, out_channels=12, kernel_size=i) for i in kernals])
         self.conv3 = nn.ModuleList([nn.Conv2d(in_channels=12, out_channels=12, kernel_size=i) for i in kernals])
         self.conv4 = nn.ModuleList([nn.Conv2d(in_channels=12, out_channels=12, kernel_size=i) for i in kernals])
-        self.pool1 = nn.AdaptiveAvgPool2d((22, 1))
-        self.pool2 = nn.AdaptiveAvgPool2d((1, 70))
-        self.pool3 = nn.AdaptiveAvgPool2d((1, 128))
+        self.pool1 = nn.AdaptiveMaxPool2d((22, 1))
+        self.pool2 = nn.AdaptiveMaxPool2d((1, 70))
+        self.pool3 = nn.AdaptiveMaxPool2d((1, 128))
         self.batch_norm = nn.BatchNorm1d(12, affine=False)
         self.lstm = nn.LSTM(1540 * 4, n_lstm_units, 2, bidirectional=True, batch_first=True)
         # todo lstminput of shape (seq_len, batch, input_size) seq_len = lat*lon = 1540
