@@ -1,6 +1,7 @@
-请把训练数据放在
+## 请把训练数据放在
 - Train/train_data/enso_round1_train_20210201中
-
+## 如果要修改model结构
+请在 Predict/code/model_structure.py 里面修改
 
 ### Feb 22th 打卡学习记录
 
