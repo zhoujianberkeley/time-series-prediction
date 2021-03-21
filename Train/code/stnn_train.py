@@ -90,6 +90,7 @@ def load_data2():
     train_va2 = train2['va'][:, :12].values
     train_label2 = label2['nino'][:, 12:36].values
 
+
     print('Train samples: {}, Valid samples: {}'.format(len(train_label), len(train_label2)))
 
     dict_train = {
@@ -108,6 +109,85 @@ def load_data2():
     valid_dataset = EarthDataSet(dict_valid)
     return train_dataset, valid_dataset
 
+
+def load_data_mix():
+    # CMIP train_data
+    train = xr.open_dataset(Path(os.path.abspath(os.pardir), "train_data", "enso_round1_train_20210201/CMIP_train.nc"))
+    label = xr.open_dataset(Path(os.path.abspath(os.pardir), "train_data", "enso_round1_train_20210201/CMIP_label.nc"))
+
+    # feature 前12个月
+    train_sst = train['sst'][:, :12].values  #(4645-样本量, 12-12个月, 24-经度, 72-纬度)
+    train_t300 = train['t300'][:, :12].values
+    train_ua = train['ua'][:, :12].values
+    train_va = train['va'][:, :12].values
+    # label 后24个月
+    train_label = label['nino'][:, 12:36].values # y
+
+    # SODA train_data
+
+    train2 = xr.open_dataset(Path(os.path.abspath(os.pardir), "train_data", "enso_round1_train_20210201/SODA_train.nc"))
+    label2 = xr.open_dataset(Path(os.path.abspath(os.pardir), "train_data", "enso_round1_train_20210201/SODA_label.nc"))
+
+
+    num_of_soda = fit_params['num_of_soda_in_a_all_soda_train']
+
+    train_sst2 = train2['sst'][num_of_soda:, :12].values  # (100, 12, 24, 72)
+    train_t3002 = train2['t300'][num_of_soda:, :12].values
+    train_ua2 = train2['ua'][num_of_soda:, :12].values
+    train_va2 = train2['va'][num_of_soda:, :12].values
+    train_label2 = label2['nino'][num_of_soda:, 12:36].values
+
+    train_sst_soda = train2['sst'][:num_of_soda, :12].values  # (100, 12, 24, 72)
+    train_t300_soda = train2['t300'][:num_of_soda, :12].values
+    train_ua_soda = train2['ua'][:num_of_soda, :12].values
+    train_va_soda = train2['va'][:num_of_soda, :12].values
+    train_label_soda = label2['nino'][:num_of_soda, 12:36].values
+
+    # For generalization purpose,we need to add more soda data to the main
+    for i in range(fit_params['num_of_all_soda_in_train']):
+        train_sst = np.vstack([train_sst,train_sst_soda])
+        train_t300 = np.vstack([train_t300,train_t300_soda])
+        train_ua = np.vstack([train_ua,train_ua_soda])
+        train_va = np.vstack([train_va,train_va_soda])
+        train_label = np.vstack([train_label,train_label_soda])
+
+    # after appending the soda data training data will be about 4600+500
+
+    train_ua = np.nan_to_num(train_ua) # Replace NaN with zero and infinity with large finite numbers
+    train_va = np.nan_to_num(train_va)
+    train_t300 = np.nan_to_num(train_t300)
+    train_sst = np.nan_to_num(train_sst)
+
+    rand_order = np.random.permutation((len(train_sst)))
+
+    train_sst = train_sst[rand_order]
+    train_t300 = train_t300[rand_order]
+    train_ua = train_ua[rand_order]
+    train_va = train_va[rand_order]
+    train_label = train_label[rand_order]
+
+
+
+
+
+
+    print('Train samples: {}, Valid samples: {}'.format(len(train_label), len(train_label2)))
+
+    dict_train = {
+        'sst': train_sst,
+        't300': train_t300,
+        'ua': train_ua,
+        'va': train_va,
+        'label': train_label}
+    dict_valid = {
+        'sst': train_sst2,
+        't300': train_t3002,
+        'ua': train_ua2,
+        'va': train_va2,
+        'label': train_label2}
+    train_dataset = EarthDataSet(dict_train)
+    valid_dataset = EarthDataSet(dict_valid)
+    return train_dataset, valid_dataset
 
 def coreff(x, y):
     x_mean = np.mean(x)
@@ -137,10 +217,12 @@ def eval_score(preds, label):
 
 
 fit_params = {
-    'n_epochs': 7,
-    'n_epochs': 2,
-    'learning_rate': 5e-4,
-    'batch_size': 128,
+    'n_epochs': 3,
+    # 'n_epochs': 2,
+    'learning_rate': 4e-3,
+    'num_of_soda_in_a_all_soda_train':60,
+    'num_of_all_soda_in_train':40,
+    'batch_size': 64,
     # 'loss':nn.MSELoss(),
     'loss':ScoreLoss()
 }
@@ -148,7 +230,7 @@ fit_params = {
 
 def train():
     set_seed()
-    train_dataset, valid_dataset = load_data2()
+    train_dataset, valid_dataset = load_data_mix()
     train_loader = DataLoader(train_dataset, batch_size=fit_params['batch_size'])
     valid_loader = DataLoader(valid_dataset, batch_size=fit_params['batch_size'])
 
