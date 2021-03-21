@@ -1,3 +1,7 @@
+请把训练数据放在
+- Train/train_data/enso_round1_train_20210201中
+
+
 ### Feb 22th 打卡学习记录
 
 一开始把Aliyun和Docker账号搞混了，出了很多模型奇妙的bug \
