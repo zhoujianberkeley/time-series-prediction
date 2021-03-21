@@ -1,12 +1,7 @@
 import os
-import random
 import numpy as np
 import xarray as xr
-import pandas as pd
-import torch.nn as nn
 import random
-from tqdm import tqdm
-from sklearn.model_selection import train_test_split
 from torch.utils.data import Dataset, DataLoader
 import matplotlib.pyplot as plt
 
@@ -14,10 +9,8 @@ loss_tracker = []
 valid_score = []
 train_score = []
 
-
 import torch
 import torch.nn as nn
-import torch.nn.functional as func
 
 def RMSE(y_true, y_pred):
     return torch.sqrt(torch.mean(torch.square(y_true - y_pred)))
