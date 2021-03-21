@@ -3,9 +3,11 @@ os.environ['KMP_DUPLICATE_LIB_OK']='True'
 import numpy as np
 import xarray as xr
 import random
+import time
 import torch
 import torch.nn as nn
 from torch.utils.data import Dataset, DataLoader
+from tqdm import tqdm
 import matplotlib.pyplot as plt
 from pathlib import Path
 
@@ -144,7 +146,7 @@ def load_data_mix():
     train_label_soda = label2['nino'][:num_of_soda, 12:36].values
 
     # For generalization purpose,we need to add more soda data to the main
-    for i in range(fit_params['num_of_all_soda_in_train']):
+    for i in tqdm(range(fit_params['num_of_all_soda_in_train'])):
         train_sst = np.vstack([train_sst,train_sst_soda])
         train_t300 = np.vstack([train_t300,train_t300_soda])
         train_ua = np.vstack([train_ua,train_ua_soda])
@@ -216,18 +218,6 @@ def eval_score(preds, label):
     return 2 / 3 * acskill - RMSE
 
 
-fit_params = {
-    'n_epochs': 3,
-    # 'n_epochs': 2,
-    'learning_rate': 4e-3,
-    'num_of_soda_in_a_all_soda_train':60,
-    'num_of_all_soda_in_train':40,
-    'batch_size': 64,
-    # 'loss':nn.MSELoss(),
-    'loss':ScoreLoss()
-}
-
-
 def train():
     set_seed()
     train_dataset, valid_dataset = load_data_mix()
@@ -244,6 +234,7 @@ def train():
     model.to(device)
     loss_fn.to(device)
 
+    tis = time.time()
     for i in range(fit_params['n_epochs']):
         model.train()
         for step, ((sst, t300, ua, va), label) in enumerate(train_loader):
@@ -292,9 +283,23 @@ def train():
             valid_score.append(sco)
         print('Epoch: {}, Valid Score {}'.format(i + 1, sco))
 
+    tic = time.time()
+    print("model train time : ", tic - tic, " train device : ", device)
+
     torch.save(model.state_dict(), Path(Path(__file__).parents[2], "Predict/user_data/stnn.pt")) # save model
     print('Model saved successfully')
 
+
+fit_params = {
+    'n_epochs': 22,
+    # 'n_epochs': 2,
+    'learning_rate': 4e-3,
+    'num_of_soda_in_a_all_soda_train':60,
+    'num_of_all_soda_in_train':40,
+    'batch_size': 64,
+    # 'loss':nn.MSELoss(),
+    'loss':ScoreLoss()
+}
 
 if __name__ == "__main__":
     train()
