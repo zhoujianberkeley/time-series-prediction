@@ -208,12 +208,12 @@ def eval_score(preds, label):
 
 
 fit_params = {
-    'n_epochs': 15,
+    'n_epochs': 7,
     # 'n_epochs': 2,
-    'learning_rate': 8e-5,
-    'batch_size': 64,
-    'loss':nn.MSELoss(),
-    # 'loss':ScoreLoss()
+    'learning_rate': 5e-4,
+    'batch_size': 128,
+    # 'loss':nn.MSELoss(),
+    'loss':ScoreLoss()
 }
 
 
@@ -260,7 +260,7 @@ def train():
             # x += -lr * x.grad
             loss_tracker.append(loss)
             train_score.append(score)
-            print('Step: {}, Train Loss(score from the coder): {}'.format(step, score))
+            # print('Step: {}, Train Loss(score from the coder): {}'.format(step, score))
             print('Step: {}, Train Loss: {}'.format(step, loss))
 
         model.eval()
